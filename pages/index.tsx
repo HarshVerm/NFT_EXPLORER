@@ -121,6 +121,9 @@ const Home: NextPage = () => {
     if (isConnected && alchemy && address && !openForm) {
       fetchNFTs(address);
     }
+    if(!isConnected){
+      setNFTs([])
+    }
   }, [isConnected, alchemy, address, openForm]);
 
   // useEffect(()=>{
@@ -130,6 +133,7 @@ const Home: NextPage = () => {
   //    })
   //   // setSlides
   // },[nfts.length])
+
 
   async function fetchNFTs(address: string) {
     const nftsForOwner = await alchemy.nft.getNftsForOwner(address);
@@ -157,7 +161,7 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <ConnectButton />
-        {openForm ? (
+       {openForm && isConnected ? (
           <Button
             onClick={() => setOpenForm(false)}
             variant="contained"
@@ -165,7 +169,7 @@ const Home: NextPage = () => {
           >
             All NFTS
           </Button>
-        ) : (
+        ) : isConnected &&  (
           <Button onClick={() => setOpenForm(true)} variant="contained">
             Create Nft
           </Button>
