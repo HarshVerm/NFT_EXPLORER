@@ -1,5 +1,7 @@
 .container {
   padding: 0 2rem;
+  background-image: url(https://ipfs.io/ipfs/QmbAy9NSQvHGUizV5Hck2hJeWvWuStMeTeeGmKtbic8KQ4);
+  object-fit: fill;
 }
 
 .main {

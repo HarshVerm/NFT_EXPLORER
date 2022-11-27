@@ -1,6 +1,12 @@
-import { Button, TextField } from "@mui/material";
+import { Button, TextField, styled } from "@mui/material";
 import CustomUploadImage from "./CustomUploadImage";
-import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import AttributeInput from "./AttributeInput";
+
+const StyledTextField = styled(TextField)(()=>({
+  "& div":{
+    backgroundColor:"white"
+  }
+}))
 
 export default function CreateNewNFT({
   title,
@@ -10,7 +16,31 @@ export default function CreateNewNFT({
   uploadImage,
   createNFT,
   imageURL,
+  attributes,
+  setAttributes,
+  fileName,
+  disabled
 }: any) {
+
+  const handleAttribut = ({value,index,input}:any) => {
+
+    let newArr = attributes.map((attr:any,indx:any)=>{
+        if(indx === index){
+          attr[input] = value
+        }
+        return attr
+    })
+    setAttributes(newArr)
+  }
+
+  const handleDelete=(idx:any) => {
+    let arr = attributes.filter((atr:any,index:any)=>idx != index )
+
+    setAttributes(arr)
+    
+
+  }
+
   return (
     <div
       style={{
@@ -23,14 +53,16 @@ export default function CreateNewNFT({
       {/* <div> */}
 
       <h2 style={{ textAlign: "center" }}>Create Your NFT</h2>
-      <TextField
+      <div style={{display:"flex"}}>
+
+      <StyledTextField
         placeholder="Title"
         variant="outlined"
         style={{ width: "300px", margin: "10px" }}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
-      <TextField
+      <StyledTextField
         placeholder="Description"
         variant="outlined"
         style={{ width: "300px", margin: "10px" }}
@@ -38,19 +70,8 @@ export default function CreateNewNFT({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <CustomUploadImage onChange={(e: any) => uploadImage(e)}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <CloudDownloadIcon />
-          <div>{imageURL}</div>
-        </div>
-      </CustomUploadImage>
+      </div>
+     
 
       {/* <label htmlFor="nft" style={{ width: "300px" }}>
       Choose a NFT Asset:
@@ -66,7 +87,31 @@ export default function CreateNewNFT({
     /> */}
       {/* </div> */}
       {/* {imageURL ? <img src={imageURL} /> : null} */}
-      <Button variant="contained" onClick={createNFT}>
+      <div style={{display:"flex",width:"640px"}}>
+
+      {/* <h4 style={{display:"flex", flexDirection:"column", justifyContent:"center"}}> Add Attributes :</h4> */}
+      <Button variant="contained"  size="medium" color="secondary"  onClick={()=>setAttributes([...attributes, {trait_type:"",  value:"" ,
+  max_value: ""}])}>
+    Add Attributes
+
+      </Button>
+    </div>
+    <div style={{marginTop:"10px" ,marginBottom:"10px"}}>
+
+      {attributes.map((attr: any, index: any) => (
+        <AttributeInput key={index} attr={attr} index={index} handleChange={handleAttribut}  handleDelete={handleDelete}/>
+        ))}
+        </div>
+   
+
+      <CustomUploadImage onChange={(e: any) => uploadImage(e)}>
+        
+        
+          <div style={{wordWrap:"break-word", width:"95%" , margin:"auto"}}>{fileName}</div>
+   
+      </CustomUploadImage>
+
+      <Button variant="contained" onClick={createNFT} disabled = {disabled} size="large">
         Deploy Your NFT
       </Button>
     </div>

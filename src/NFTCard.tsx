@@ -15,9 +15,9 @@ export default function NFTCard({ nft }: any) {
                 alt={nft.title}
                 style={{ width: "auto", margin: "auto" }}
             />
-            <CardHeader title={nft.contract.name} />
+            <CardHeader title={nft.metaData.name ?? nft.metaData?.title} />
             <CardContent style={{ fontSize: "13px" }}>
-                {nft.description}
+                {nft.metaData.description}
             </CardContent>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
 

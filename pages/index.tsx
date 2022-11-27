@@ -1,22 +1,16 @@
-import { Button, TextField } from "@mui/material";
+import { Button } from "@mui/material";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Network, Alchemy } from "alchemy-sdk";
 import axios from "axios";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import {
-  useAccount,
-  useContract,
-  useContractWrite,
-  usePrepareContractWrite,
-  useProvider,
-  useSigner,
-} from "wagmi";
+import { useAccount, useContract, useSigner } from "wagmi";
 import NFTCard from "../src/NFTCard";
 import styles from "../styles/Home.module.css";
 import { create } from "ipfs-http-client";
 import CreateNewNFT from "../src/CreateNewNFT";
+import { toast } from "react-toastify";
 
 const Home: NextPage = () => {
   const { address, isConnecting, isDisconnected, isConnected } = useAccount();
@@ -26,228 +20,12 @@ const Home: NextPage = () => {
   const [description, setDescription] = useState("");
   const [title, setTitle] = useState("");
   const [imageURL, setImageURL] = useState("");
+  const [fileName, setFileName] = useState("")
+  const [attributes, setAttributes] = useState([{trait_type:"",  value:"" ,max_value: ""}])
+  const [disabled, setDisabled] = useState(true)
 
-  const nftAddress = "0xF914bE9F68F3081308CDCc008Ef96b9da4af8810";
-  const abi = [
-    {
-      inputs: [
-        { internalType: "string", name: "_name", type: "string" },
-        { internalType: "string", name: "_symbol", type: "string" },
-      ],
-      stateMutability: "nonpayable",
-      type: "constructor",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_owner",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_operator",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "bool",
-          name: "_approved",
-          type: "bool",
-        },
-      ],
-      name: "ApprovalForAll",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_operator",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_from",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_to",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256[]",
-          name: "_ids",
-          type: "uint256[]",
-        },
-        {
-          indexed: false,
-          internalType: "uint256[]",
-          name: "_values",
-          type: "uint256[]",
-        },
-      ],
-      name: "TransferBatch",
-      type: "event",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_operator",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_from",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "_to",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "_id",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "_value",
-          type: "uint256",
-        },
-      ],
-      name: "TransferSingle",
-      type: "event",
-    },
-    {
-      inputs: [
-        { internalType: "address", name: "account", type: "address" },
-        { internalType: "uint256", name: "id", type: "uint256" },
-      ],
-      name: "balanceOf",
-      outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "address[]", name: "accounts", type: "address[]" },
-        { internalType: "uint256[]", name: "ids", type: "uint256[]" },
-      ],
-      name: "balanceOfBatch",
-      outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "address", name: "owner", type: "address" },
-        { internalType: "address", name: "operator", type: "address" },
-      ],
-      name: "isApprovedForAll",
-      outputs: [{ internalType: "bool", name: "", type: "bool" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "uint256", name: "amount", type: "uint256" },
-        { internalType: "string", name: "_uri", type: "string" },
-      ],
-      name: "mint",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "name",
-      outputs: [{ internalType: "string", name: "", type: "string" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "address", name: "from", type: "address" },
-        { internalType: "address", name: "to", type: "address" },
-        { internalType: "uint256[]", name: "ids", type: "uint256[]" },
-        { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
-        { internalType: "bytes", name: "_data", type: "bytes" },
-      ],
-      name: "safeBatchTransferFrom",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "address", name: "from", type: "address" },
-        { internalType: "address", name: "to", type: "address" },
-        { internalType: "uint256", name: "id", type: "uint256" },
-        { internalType: "uint256", name: "amount", type: "uint256" },
-        { internalType: "bytes", name: "_data", type: "bytes" },
-      ],
-      name: "safeTransferFrom",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [
-        { internalType: "address", name: "operator", type: "address" },
-        { internalType: "bool", name: "approved", type: "bool" },
-      ],
-      name: "setApprovalForAll",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [{ internalType: "bytes4", name: "interfaceId", type: "bytes4" }],
-      name: "supportsInterface",
-      outputs: [{ internalType: "bool", name: "", type: "bool" }],
-      stateMutability: "pure",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "symbol",
-      outputs: [{ internalType: "string", name: "", type: "string" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [],
-      name: "tokenCount",
-      outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
-      name: "uri",
-      outputs: [{ internalType: "string", name: "", type: "string" }],
-      stateMutability: "view",
-      type: "function",
-    },
-  ];
+  const nftAddress = "0xc7d93565B748306A73e8f208bDe1CC5Fc60399c0";
+  const abi =[{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_symbol","type":"string"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_owner","type":"address"},{"indexed":true,"internalType":"address","name":"_approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_owner","type":"address"},{"indexed":true,"internalType":"address","name":"_operator","type":"address"},{"indexed":false,"internalType":"bool","name":"_approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":true,"internalType":"address","name":"_to","type":"address"},{"indexed":true,"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"_approved","type":"address"},{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"},{"internalType":"address","name":"_operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_tokenURI","type":"string"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_tokenId","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_operator","type":"address"},{"internalType":"bool","name":"_approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"tokenCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"payable","type":"function"}]
 
   const { data: signer, isError, isLoading } = useSigner();
 
@@ -282,20 +60,22 @@ const Home: NextPage = () => {
         authorization: auth,
       },
     });
-    setImageURL(e.target.files[0].name);
-    // const response = await client.add(e.target.files[0]);
-    // setImageURL(`https://ipfs.io/ipfs/${response.path}`);
-    // console.log(response);
+    setFileName(e.target.files[0].name);
+    const response = await client.add(e.target.files[0]);
+    setImageURL(`https://ipfs.io/ipfs/${response.path}`);
+    setDisabled(false)
+    console.log(response, "image");
   };
 
   const createNFT = async () => {
-    if (!title || !description || !imageURL) {
+    if (!title || !description ) {
       alert("All field required");
     } else {
       const metaData = {
-        title,
+        name :title,
         description,
         image: imageURL,
+        attributes
       };
       const auth =
         "Basic " +
@@ -311,14 +91,45 @@ const Home: NextPage = () => {
         },
       });
       const response = await client.add(JSON.stringify(metaData));
+      console.log("metaData", metaData)
+      const transaction =  await contract?.mint(
+        `https://ipfs.io/ipfs/${response.path}`
+      )
+
+      setAttributes([{trait_type:"",  value:"" ,max_value: ""}])
+      setDescription("")
+      setTitle("")
+      setFileName("")
+      setImageURL(" ")
+      setDisabled(true)
+      setOpenForm(false)
+      toast.success('NFT Created', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        });
     }
   };
 
   useEffect(() => {
-    if (isConnected && alchemy && address) {
+    
+    if (isConnected && alchemy && address && !openForm) {
       fetchNFTs(address);
     }
-  }, [isConnected, alchemy, address]);
+  }, [isConnected, alchemy, address, openForm]);
+
+  // useEffect(()=>{
+  //    let arr = []
+  //    nfts?.map((nft: any, index: any)=>{
+  //     arr.push(<NFTCard nft={nft} key={index +`${JSON.stringify(nft)}`} />)
+  //    })
+  //   // setSlides
+  // },[nfts.length])
 
   async function fetchNFTs(address: string) {
     const nftsForOwner = await alchemy.nft.getNftsForOwner(address);
@@ -329,7 +140,7 @@ const Home: NextPage = () => {
 
       nftsForOwner.ownedNfts[index].metaData = metaData.data;
     }
-    // console.log(nftsForOwner.ownedNfts)
+    console.log(nftsForOwner.ownedNfts)
 
     setNFTs(nftsForOwner.ownedNfts);
   }
@@ -346,9 +157,19 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <ConnectButton />
-        <Button onClick={() => setOpenForm(true)} variant="contained">
-          Create Nft
-        </Button>
+        {openForm ? (
+          <Button
+            onClick={() => setOpenForm(false)}
+            variant="contained"
+            color="secondary"
+          >
+            All NFTS
+          </Button>
+        ) : (
+          <Button onClick={() => setOpenForm(true)} variant="contained">
+            Create Nft
+          </Button>
+        )}
       </main>
       {openForm ? (
         <CreateNewNFT
@@ -358,6 +179,12 @@ const Home: NextPage = () => {
           uploadImage={uploadImage}
           createNFT={createNFT}
           imageURL={imageURL}
+          attributes = {attributes}
+          setAttributes = {setAttributes}
+          setDescription={setDescription}
+          disabled = {disabled}
+          setDisabled = {setDisabled}
+          fileName = {fileName}
         />
       ) : (
         <div
@@ -368,7 +195,7 @@ const Home: NextPage = () => {
           }}
         >
           {nfts?.map((nft: any, index: any) => (
-            <NFTCard nft={nft} key={index +`${JSON.stringify(nft)}`} />
+            <NFTCard nft={nft} key={index + `${JSON.stringify(nft)}`} />
           ))}
         </div>
       )}
